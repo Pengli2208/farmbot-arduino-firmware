@@ -1,5 +1,7 @@
 #ifndef _FARMBOT_BOARD_ID
-  // Default to FARMDUINO_V14
+
+  //#define RAMPS_V14
+  //#define FARMDUINO_V10
   #define FARMDUINO_V14
 
 #else
