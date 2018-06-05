@@ -1,6 +1,3 @@
-# Someone will thank me later for this.
-# Find and replace EEPROM with the name of your dependency.
-
 DEP_EEPROM_BUILD_DIR := $(FBARDUINO_FIRMWARE_LIB_BUILD_DIR)/EEPROM
 DEP_EEPROM := $(DEP_EEPROM_BUILD_DIR)/EEPROM.a
 DEP_EEPROM_SRC_DIR := $(ARDUINO_INSTALL_DIR)/hardware/arduino/avr/libraries/EEPROM/src
