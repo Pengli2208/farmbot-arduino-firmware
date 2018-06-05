@@ -1,107 +1,60 @@
-FBARDUINO_FIRMWARE_BUILD_DIR ?= $(shell pwd)/_build
-FBARDUINO_FIRMWARE_BIN_DIR ?= $(shell pwd)/_build
+BUILD_DIR ?= $(shell pwd)/_build
+BIN_DIR ?= $(shell pwd)/bin
 FBARDUINO_FIRMWARE_SRC_DIR ?= src
 
-ARDUINO_FW=$(FBARDUINO_FIRMWARE_BIN_DIR)/arduino-firmware.hex
-FARMDUINO_FW=$(FBARDUINO_FIRMWARE_BIN_DIR)/farmduino-firmware.hex
-FARMDUINO_V14_FW=$(FBARDUINO_FIRMWARE_BIN_DIR)/farmduino_k14-firmware.hex
-BLINK_FW=$(FBARDUINO_FIRMWARE_BIN_DIR)/blink.hex
-CLEAR_EEPROM_FW=$(FBARDUINO_FIRMWARE_BIN_DIR)/clear_eeprom.hex
-
 ARDUINO_INSTALL_DIR ?= $(HOME)/arduino-1.8.5
-ARDUINO_BUILDER := $(ARDUINO_INSTALL_DIR)/arduino-builder
 
-ARDUINO_HARDWARE_DIR := $(ARDUINO_INSTALL_DIR)/hardware
-ARDUINO_HARDWARE_FLAGS := -hardware $(ARDUINO_HARDWARE_DIR)
+SRC := $(wildcard $(FBARDUINO_FIRMWARE_SRC_DIR)/*.cpp)
+OBJ := $(SRC:.cpp=.o)
+SRC_DEPS := $(SRC) $(wildcard $(FBARDUINO_FIRMWARE_SRC_DIR)/*.h) $(wildcard $(FBARDUINO_FIRMWARE_SRC_DIR)/*.ino)
 
-ARDUINO_TOOLS_FLAGS := -tools $(ARDUINO_INSTALL_DIR)/tools-builder \
-	-tools $(ARDUINO_HARDWARE_DIR)/tools/avr
+CXX := $(ARDUINO_INSTALL_DIR)/hardware/tools/avr/bin/avr-g++
+CC := $(ARDUINO_INSTALL_DIR)/hardware/tools/avr/bin/avr-gcc
 
-ARDUINO_LIBS_FLAGS := -built-in-libraries $(ARDUINO_INSTALL_DIR)/libraries
+ARDUINO_CXX_FLAGS := \
+	-I/home/connor/arduino-1.8.5/hardware/arduino/avr/cores/arduino \
+	-I/home/connor/arduino-1.8.5/hardware/arduino/avr/variants/mega \
+	-I/home/connor/arduino-1.8.5/hardware/arduino/avr/libraries/SPI/src \
+	-I/home/connor/arduino-1.8.5/hardware/arduino/avr/libraries/EEPROM/src \
+	-I/home/connor/arduino-1.8.5/libraries/Servo/src
 
-ARDUINO_PREFS_FLAGS := -prefs=build.warn_data_percentage=75 \
-	-prefs=runtime.tools.avrdude.path=$(ARDUINO_INSTALL_DIR)/hardware/tools/avr \
-	-prefs=runtime.tools.avr-gcc.path=$(ARDUINO_INSTALL_DIR)/hardware/tools/avr \
+CXX_FLAGS := -g -Os -w -std=gnu++11 -fpermissive -fno-exceptions -ffunction-sections -fdata-sections -fno-threadsafe-statics \
+-flto -w -x c++ -E -CC -mmcu=atmega2560 -DF_CPU=16000000L -DARDUINO=10600 -DARDUINO_AVR_MEGA2560 -DARDUINO_ARCH_AVR
 
-ARDUINO_ARCH_FLAGS := -fqbn=arduino:avr:mega:cpu=atmega2560
-ARDUINO_SRC_INO := $(FBARDUINO_FIRMWARE_SRC_DIR)/src.ino
-ARDUINO_SRC_BLINK_INO := $(ARDUINO_INSTALL_DIR)/examples/01.Basics/Blink/Blink.ino
-ARDUINO_SRC_CLEAR_EEPROM_INO := $(ARDUINO_HARDWARE_DIR)/arduino/avr/libraries/EEPROM/examples/eeprom_clear/eeprom_clear.ino
+ARDUINO_CFLAGS :=
+CFLAGS := -w -Os -g -flto -fuse-linker-plugin -Wl,--gc-sections,--relax -mmcu=atmega2560
 
-ARDUINO_BUILD_DIR := $(FBARDUINO_FIRMWARE_BUILD_DIR)/arduino
-ARDUINO_CACHE_DIR := $(FBARDUINO_FIRMWARE_BUILD_DIR)/arduino-cache
+ARDUINO_LDFLAGS := 	/home/connor/farmbot/farmbot-arduino-firmware/_build/arduino/core/core.a -L/home/connor/farmbot/farmbot-arduino-firmware/_build/arduino -lm
+LDFLAGS :=
 
-ARDUINO_BUILD_DIR_FLAGS := -build-path $(ARDUINO_BUILD_DIR) \
-	-build-cache $(ARDUINO_CACHE_DIR) \
+ARDUINO_HEX := $(BIN_DIR)/arduino-firmware.hex
+ARDUINO_ELF := $(BUILD_DIR)/arduino-firmware.elf
 
-ARDUINO_BUILD_COMMON = $(ARDUINO_BUILDER) \
-	$(ARDUINO_HARDWARE_FLAGS) \
-	$(ARDUINO_TOOLS_FLAGS) \
-	$(ARDUINO_LIBS_FLAGS) \
-	$(ARDUINO_ARCH_FLAGS) \
-	$(ARDUINO_PREFS_FLAGS) \
-	$(ARDUINO_BUILD_DIR_FLAGS) -quiet
+FARMDUINO_HEX := $(BIN_DIR)/farmduino-firmware.hex
+FARMDUINO_V14_HEX := $(BIN_DIR)/farmduino_k14-firmware.hex
+BLINK_HEX := $(BIN_DIR)/blink.hex
+CLEAR_EEPROM_HEX := $(BIN_DIR)/clear_eeprom.hex
 
-ARDUINO_BUILD := $(ARDUINO_BUILD_COMMON) $(ARDUINO_SRC_INO)
-BLINK_BUILD := $(ARDUINO_BUILD_COMMON) $(ARDUINO_SRC_BLINK_INO) > /dev/null 2>&1
-CLEAR_EEPROM_BUILD := $(ARDUINO_BUILD_COMMON) $(ARDUINO_SRC_CLEAR_EEPROM_INO) > /dev/null 2>&1
+.PHONY: all clean
 
-SRC=$(wildcard $(FBARDUINO_FIRMWARE_SRC_DIR)/*.cpp) $(wildcard $(FBARDUINO_FIRMWARE_SRC_DIR)/*.h) $(wildcard $(FBARDUINO_FIRMWARE_SRC_DIR)/*.ino)
-
-.PHONY: all clean firmwares farmbot_arduino_firmware_build_dirs firmwares arduino farmduino farmduino_k14 blink clear_eeprom
-
-all: $(FBARDUINO_FIRMWARE_BUILD_DIR) $(FBARDUINO_FIRMWARE_BIN_DIR) firmwares
-
-firmwares: arduino farmduino farmduino_k14 blink clear_eeprom
-
-arduino:  $(SRC) farmbot_arduino_firmware_build_dirs $(ARDUINO_FW)
-
-farmduino:  $(SRC) farmbot_arduino_firmware_build_dirs $(FARMDUINO_FW)
-
-farmduino_k14: $(SRC) farmbot_arduino_firmware_build_dirs $(FARMDUINO_V14_FW)
-
-blink: farmbot_arduino_firmware_build_dirs $(BLINK_FW)
-
-clear_eeprom: farmbot_arduino_firmware_build_dirs $(CLEAR_EEPROM_FW)
-
-$(ARDUINO_FW): $(SRC)
-	$(info Building arduino fw: $@)
-	$(ARDUINO_BUILD) -prefs="runtime.ide.version=10600 -_FARMBOT_BOARD_ID=0"
-	@cp $(ARDUINO_BUILD_DIR)/src.ino.hex $@
-
-$(FARMDUINO_FW): $(SRC)
-	$(info Building Farmduino v10 fw: $@)
-	$(ARDUINO_BUILD) -prefs="runtime.ide.version=10600 -_FARMBOT_BOARD_ID=1"
-	@cp $(ARDUINO_BUILD_DIR)/src.ino.hex $@
-
-$(FARMDUINO_V14_FW): $(SRC)
-	$(info Building Farmduino v14 fw: $@)
-	$(ARDUINO_BUILD) -prefs="runtime.ide.version=10600 -_FARMBOT_BOARD_ID=2"
-	@cp $(ARDUINO_BUILD_DIR)/src.ino.hex $@
-
-$(BLINK_FW):
-	$(info Building Blink: $@)
-	@$(BLINK_BUILD)
-	@cp $(ARDUINO_BUILD_DIR)/Blink.ino.hex $@
-
-$(CLEAR_EEPROM_FW):
-	$(info Building clear eeprom utility $@)
-	@$(CLEAR_EEPROM_BUILD)
-	@cp $(ARDUINO_BUILD_DIR)/eeprom_clear.ino.hex $@
+all: $(ARDUINO_HEX)
 
 clean:
-	$(RM) $(ARDUINO_FW) $(FARMDUINO_FW) $(FARMDUINO_V14_FW) $(BLINK_FW) $(CLEAR_EEPROM_FW)
+	$(RM) $(OBJ)
 
-$(FBARDUINO_FIRMWARE_BUILD_DIR):
-	mkdir -p $(FBARDUINO_FIRMWARE_BUILD_DIR)
+$(ARDUINO_HEX): $(ARDUINO_ELF)
 
-$(ARDUINO_BUILD_DIR):
-	mkdir -p $(ARDUINO_BUILD_DIR)
+$(ARDUINO_ELF): $(BUILD_DIR) $(BIN_DIR) $(SRC_DEPS) $(OBJ)
+	$(CC) $(ARDUINO_CFLAGS) $(CFLAGS) -o $(ARDUINO_ELF) $(OBJ) $(ARDUINO_LDFLAGS) $(LDFLAGS)
 
-$(ARDUINO_CACHE_DIR):
-	mkdir -p $(ARDUINO_CACHE_DIR)
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
 
-$(FBARDUINO_FIRMWARE_BIN_DIR):
-	mkdir -p $(FBARDUINO_FIRMWARE_BIN_DIR)
+$(BIN_DIR):
+	mkdir -p $(BIN_DIR)
 
-farmbot_arduino_firmware_build_dirs: $(ARDUINO_BUILD_DIR) $(ARDUINO_CACHE_DIR) $(FBARDUINO_FIRMWARE_BIN_DIR)
+%.o: %.cpp
+	$(CXX) -c $(ARDUINO_CXX_FLAGS) $(CXX_FLAGS) -o $@ $<
+
+%.o: src/src.ino
+	$(CXX) -c $(ARDUINO_CXX_FLAGS) $(CXX_FLAGS) -o $@ $<

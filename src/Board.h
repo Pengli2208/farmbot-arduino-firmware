@@ -1,4 +1,4 @@
-#ifndef _FARMBOT_BOARD_ID
+#ifndef FARMBOT_BOARD_ID
 
   //#define RAMPS_V14
   //#define FARMDUINO_V10
@@ -6,11 +6,15 @@
 
 #else
 
-  #if _FARMBOT_BOARD_ID == 0
+  #undef RAMPS_V14
+  #undef FARMDUINO_V10
+  #undef FARMDUINO_V14
+
+  #if FARMBOT_BOARD_ID == 0
     #define RAMPS_V14
-  #elif _FARMBOT_BOARD_ID == 1
+  #elif FARMBOT_BOARD_ID == 1
     #define FARMDUINO_V10
-  #elif _FARMBOT_BOARD_ID == 2
+  #elif FARMBOT_BOARD_ID == 2
     #define FARMDUINO_V14
   #endif
 
