@@ -1,5 +1,5 @@
 TARGET_farmduino_v10_BUILD_DIR := $(BUILD_DIR)/farmduino_v10
-TARGET_farmduino_v10_HEX := $(BIN_DIR)/farmduino_v10.hex
+TARGET_farmduino_v10_HEX := $(BIN_DIR)/farmduino.hex
 
 TARGET_farmduino_v10_OBJ := $(patsubst $(FBARDUINO_FIRMWARE_SRC_DIR)/%,$(TARGET_farmduino_v10_BUILD_DIR)/%,$(CXX_OBJ))
 
