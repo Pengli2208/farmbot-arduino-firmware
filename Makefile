@@ -1,6 +1,7 @@
 rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2)$(filter $(subst *,%,$2),$d))
 
 BUILD_DIR ?= $(shell pwd)/_build
+BIN_DIR ?= $(shell pwd)/bin
 FBARDUINO_FIRMWARE_SRC_DIR ?= src
 FBARDUINO_FIRMWARE_BUILD_DIR ?= $(BUILD_DIR)/sketch
 FBARDUINO_FIRMWARE_LIB_BUILD_DIR ?= $(BUILD_DIR)/libraries
@@ -56,4 +57,7 @@ all: $(BIN_DIR) $(DEPS) target_ramps_v14 target_farmduino_v10 target_farmduino_k
 clean: target_ramps_v14_clean target_farmduino_v10_clean target_farmduino_k14_clean
 
 force_clean:
-	$(RM) -r $(BUILD_DIR)
+	$(RM) -r $(BUILD_DIR) $(BIN_DIR)
+
+$(BIN_DIR):
+	$(MKDIR_P) $(BIN_DIR)

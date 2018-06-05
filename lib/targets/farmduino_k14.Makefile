@@ -1,5 +1,5 @@
 TARGET_farmduino_k14_BUILD_DIR := $(BUILD_DIR)/farmduino_k14
-TARGET_farmduino_k14_HEX := $(BUILD_DIR)/farmduino_k14.hex
+TARGET_farmduino_k14_HEX := $(BIN_DIR)/farmduino_k14.hex
 
 TARGET_farmduino_k14_OBJ := $(patsubst $(FBARDUINO_FIRMWARE_SRC_DIR)/%,$(TARGET_farmduino_k14_BUILD_DIR)/%,$(CXX_OBJ))
 
@@ -22,3 +22,4 @@ target_farmduino_k14: $(TARGET_farmduino_k14_HEX)
 
 target_farmduino_k14_clean:
 	$(RM) -r $(TARGET_farmduino_k14_BUILD_DIR)
+	$(RM) $(TARGET_farmduino_k14_HEX)

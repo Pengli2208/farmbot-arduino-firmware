@@ -1,5 +1,5 @@
 TARGET_farmduino_v10_BUILD_DIR := $(BUILD_DIR)/farmduino_v10
-TARGET_farmduino_v10_HEX := $(BUILD_DIR)/farmduino_v10.hex
+TARGET_farmduino_v10_HEX := $(BIN_DIR)/farmduino_v10.hex
 
 TARGET_farmduino_v10_OBJ := $(patsubst $(FBARDUINO_FIRMWARE_SRC_DIR)/%,$(TARGET_farmduino_v10_BUILD_DIR)/%,$(CXX_OBJ))
 
@@ -14,7 +14,6 @@ $(TARGET_farmduino_v10_BUILD_DIR)/farmduino_v10.elf: $(TARGET_farmduino_v10_OBJ)
 
 $(TARGET_farmduino_v10_BUILD_DIR)/%.o: $(FBARDUINO_FIRMWARE_SRC_DIR)/%.cpp
 	$(CXX) $(CXX_FLAGS) -DFARMBOT_BOARD_ID=1 $(DEPS_CFLAGS) $< -o $@
-	@echo
 
 $(TARGET_farmduino_v10_BUILD_DIR):
 	$(MKDIR_P) $(TARGET_farmduino_v10_BUILD_DIR)
@@ -22,4 +21,5 @@ $(TARGET_farmduino_v10_BUILD_DIR):
 target_farmduino_v10: $(TARGET_farmduino_v10_HEX)
 
 target_farmduino_v10_clean:
-	$(RM) -r $(TARGET_farmduino_v10_BUILD_DIR)
+	$(RM) -r $(TARGET_farmduino_v10_OBJ)
+	$(RM) $(TARGET_farmduino_v10_HEX)
