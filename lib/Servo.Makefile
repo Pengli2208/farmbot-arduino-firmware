@@ -5,8 +5,6 @@ DEP_Servo_SRC_DIR := $(ARDUINO_INSTALL_DIR)/libraries/Servo/src
 DEP_Servo_CFLAGS := \
 	-I$(DEP_Servo_SRC_DIR)
 
-DEP_Servo_LDFLAGS :=
-
 DEP_Servo_CFLAGS := -I$(DEP_Servo_SRC_DIR)
 DEP_Servo_LDFLAGS := $(DEP_Servo_BUILD_DIR)/Servo.a -L$(DEP_Servo_BUILD_DIR) -lm
 

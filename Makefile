@@ -1,7 +1,6 @@
 rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2)$(filter $(subst *,%,$2),$d))
 
 BUILD_DIR ?= $(shell pwd)/_build
-BIN_DIR ?= $(shell pwd)/bin
 FBARDUINO_FIRMWARE_SRC_DIR ?= src
 FBARDUINO_FIRMWARE_BUILD_DIR ?= $(BUILD_DIR)/sketch
 FBARDUINO_FIRMWARE_LIB_BUILD_DIR ?= $(BUILD_DIR)/libraries
@@ -15,9 +14,6 @@ SRC_DEPS := $(SRC) $(wildcard $(FBARDUINO_FIRMWARE_SRC_DIR)/*.h)
 
 # Object files and Dependency files That will eventually be built.
 CXX_OBJ := $(CXX_SRC:.cpp=.o)
-CXX_D   := $(CXX_SRC:.cpp=.d)
-D   := $(patsubst $(FBARDUINO_FIRMWARE_SRC_DIR)/%,$(FBARDUINO_FIRMWARE_BUILD_DIR)/%,$(CXX_D))
-OBJ := $(patsubst $(FBARDUINO_FIRMWARE_SRC_DIR)/%,$(FBARDUINO_FIRMWARE_BUILD_DIR)/%,$(CXX_OBJ))
 
 ## Commands needed to compile and whatnot.
 CXX := $(ARDUINO_INSTALL_DIR)/hardware/tools/avr/bin/avr-g++
@@ -29,19 +25,6 @@ MKDIR_P := mkdir -p
 CXX_FLAGS := -c -g -Os -w -std=gnu++11 -fpermissive -fno-exceptions -ffunction-sections -fdata-sections -fno-threadsafe-statics -MMD -flto -mmcu=atmega2560 -DF_CPU=16000000L -DARDUINO=10600 -DARDUINO_AVR_MEGA2560 -DARDUINO_ARCH_AVR
 CFLAGS := -w -Os -g -flto -fuse-linker-plugin -Wl,--gc-sections,--relax -mmcu=atmega2560
 
-# Targets.
-ARDUINO_HEX := $(BIN_DIR)/arduino-firmware.hex
-ARDUINO_EEP := $(BUILD_DIR)/arduino-firmware.eep
-ARDUINO_ELF := $(BUILD_DIR)/arduino-firmware.elf
-
-FARMDUINO_HEX := $(BIN_DIR)/farmduino-firmware.hex
-FARMDUINO_EEP := $(BUILD_DIR)/farmduino-firmware.eep
-FARMDUINO_ELF := $(BUILD_DIR)/farmduino-firmware.elf
-
-FARMDUINO_V14_HEX := $(BIN_DIR)/farmduino_k14-firmware.hex
-FARMDUINO_V14_EEP := $(BUILD_DIR)/farmduino_k14-firmware.eep
-FARMDUINO_V14_ELF := $(BUILD_DIR)/farmduino_k14-firmware.elf
-
 .DEFAULT_GOAL := all
 
 ## Dependencies
@@ -50,60 +33,27 @@ include lib/SPI.Makefile
 include lib/Servo.Makefile
 include lib/EEPROM.Makefile
 
+# Targets
+include lib/targets/ramps_v14.Makefile
+include lib/targets/farmduino_v10.Makefile
+include lib/targets/farmduino_k14.Makefile
+
 .PHONY: all clean \
 	dep_core dep_core_clean \
 	dep_Servo dep_Servo_clean \
 	dep_SPI dep_SPI_clean \
-	dep_EEPROM dep_EEPROM_clean
+	dep_EEPROM dep_EEPROM_clean \
+	target_ramps_v14 target_ramps_v14_clean \
+	target_farmduino_v10 target_farmduino_v10_clean \
+	target_farmduino_k14 target_farmduino_k14_clean
 
 DEPS := $(DEP_CORE) $(DEP_SPI) $(DEP_Servo) $(DEP_EEPROM)
+DEPS_OBJ := $(DEP_SPI_OBJ) $(DEP_Servo_OBJ) $(DEP_EEPROM_OBJ)
 DEPS_CFLAGS := $(DEP_CORE_CFLAGS) $(DEP_SPI_CFLAGS) $(DEP_Servo_CFLAGS) $(DEP_EEPROM_CFLAGS)
-DEPS_LDFLAGS := $(DEP_CORE_LDFLAGS) $(DEP_SPI_LDFLAGS) $(DEP_Servo_LDFLAGS) $(DEP_EEPROM_LDFLAGS)
 
-all: $(ARDUINO_HEX) $(FARMDUINO_HEX) $(FARMDUINO_V14_HEX)
+all: $(BIN_DIR) $(DEPS) target_ramps_v14 target_farmduino_v10 target_farmduino_k14
 
-clean:
-	$(RM) $(OBJ)
-	$(RM) $(D)
+clean: target_ramps_v14_clean target_farmduino_v10_clean target_farmduino_k14_clean
 
 force_clean:
-	$(RM) -r $(BUILD_DIR) $(BIN_DIR)
-
-$(ARDUINO_HEX): $(ARDUINO_ELF) $(ARDUINO_EEP)
-	$(OBJ_COPY) -O ihex -R .eeprom  $(ARDUINO_ELF) $(ARDUINO_HEX)
-
-$(ARDUINO_EEP): $(ARDUINO_ELF)
-	$(OBJ_COPY) -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0  $(ARDUINO_ELF) $(ARDUINO_EEP)
-
-$(ARDUINO_ELF): $(BUILD_DIR) $(BIN_DIR) $(FBARDUINO_FIRMWARE_BUILD_DIR) $(DEPS) $(SRC_DEPS) $(OBJ)
-	$(CC) -w -Os -g -flto -fuse-linker-plugin -Wl,--gc-sections,--relax -mmcu=atmega2560 -o $(ARDUINO_ELF) $(OBJ) $(DEP_SPI_OBJ) $(DEP_Servo_OBJ) $(DEP_CORE_LDFLAGS)
-
-$(FARMDUINO_HEX): $(FARMDUINO_ELF) $(FARMDUINO_EEP)
-	$(OBJ_COPY) -O ihex -R .eeprom  $(FARMDUINO_ELF) $(FARMDUINO_HEX)
-
-$(FARMDUINO_EEP): $(FARMDUINO_ELF)
-	$(OBJ_COPY) -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0  $(FARMDUINO_ELF) $(FARMDUINO_EEP)
-
-$(FARMDUINO_ELF): $(BUILD_DIR) $(BIN_DIR) $(FBFARMDUINO_FIRMWARE_BUILD_DIR) $(DEPS) $(SRC_DEPS) $(OBJ)
-	$(CC) -w -Os -g -flto -fuse-linker-plugin -Wl,--gc-sections,--relax -mmcu=atmega2560 -o $(FARMDUINO_ELF) $(OBJ) $(DEP_SPI_OBJ) $(DEP_Servo_OBJ) $(DEP_CORE_LDFLAGS)
-
-$(FARMDUINO_V14_HEX): $(FARMDUINO_V14_ELF) $(FARMDUINO_V14_EEP)
-	$(OBJ_COPY) -O ihex -R .eeprom  $(FARMDUINO_V14_ELF) $(FARMDUINO_V14_HEX)
-
-$(FARMDUINO_V14_EEP): $(FARMDUINO_V14_ELF)
-	$(OBJ_COPY) -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0  $(FARMDUINO_V14_ELF) $(FARMDUINO_V14_EEP)
-
-$(FARMDUINO_V14_ELF): $(BUILD_DIR) $(BIN_DIR) $(FBFARMDUINO_V14_FIRMWARE_BUILD_DIR) $(DEPS) $(SRC_DEPS) $(OBJ)
-	$(CC) -w -Os -g -flto -fuse-linker-plugin -Wl,--gc-sections,--relax -mmcu=atmega2560 -o $(FARMDUINO_V14_ELF) $(OBJ) $(DEP_SPI_OBJ) $(DEP_Servo_OBJ) $(DEP_CORE_LDFLAGS)
-
-$(BUILD_DIR):
-	$(MKDIR_P) $(BUILD_DIR)
-
-$(BIN_DIR):
-	$(MKDIR_P) $(BIN_DIR)
-
-$(FBARDUINO_FIRMWARE_BUILD_DIR):
-	$(MKDIR_P) $(FBARDUINO_FIRMWARE_BUILD_DIR)
-
-$(FBARDUINO_FIRMWARE_BUILD_DIR)/%.o: $(FBARDUINO_FIRMWARE_SRC_DIR)/%.cpp
-	$(CXX) $(CXX_FLAGS) $(DEPS_CFLAGS) $< -o $@
+	$(RM) -r $(BUILD_DIR)
