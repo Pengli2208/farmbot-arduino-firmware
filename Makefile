@@ -56,6 +56,14 @@ all: $(BIN_DIR) $(DEPS) target_ramps_v14 target_farmduino_v10 target_farmduino_k
 
 clean: target_ramps_v14_clean target_farmduino_v10_clean target_farmduino_k14_clean
 
+strings_test: all
+	$(OBJ_COPY) -I ihex $(TARGET_ramps_v14_HEX)     -O binary $(TARGET_ramps_v14_HEX).bin
+	$(OBJ_COPY) -I ihex $(TARGET_farmduino_v10_HEX) -O binary $(TARGET_farmduino_v10_HEX).bin
+	$(OBJ_COPY) -I ihex $(TARGET_farmduino_k14_HEX) -O binary $(TARGET_farmduino_k14_HEX).bin
+	@strings $(TARGET_ramps_v14_HEX).bin | grep -q "6.4.0.R" 
+	@strings $(TARGET_farmduino_v10_HEX).bin | grep -q "6.4.0.F" 
+	@strings $(TARGET_farmduino_k14_HEX).bin | grep -q "6.4.0.G" 
+
 force_clean:
 	$(RM) -r $(BUILD_DIR) $(BIN_DIR)
 
