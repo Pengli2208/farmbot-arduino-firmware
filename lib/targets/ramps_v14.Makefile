@@ -13,7 +13,7 @@ $(TARGET_ramps_v14_BUILD_DIR)/arduino_firmware.elf: $(TARGET_ramps_v14_OBJ)
 	$(CC) -w -Os -g -flto -fuse-linker-plugin -Wl,--gc-sections,--relax -mmcu=atmega2560 -o $@ $(TARGET_ramps_v14_OBJ) $(DEPS_OBJ) $(DEP_CORE_LDFLAGS)
 
 $(TARGET_ramps_v14_BUILD_DIR)/%.o: $(FBARDUINO_FIRMWARE_SRC_DIR)/%.cpp
-	$(CXX) $(CXX_FLAGS) -DFARMBOT_BOARD_ID=1 $(DEPS_CFLAGS) $< -o $@
+	$(CXX) $(CXX_FLAGS) -DFARMBOT_BOARD_ID=0 $(DEPS_CFLAGS) $< -o $@
 
 $(TARGET_ramps_v14_BUILD_DIR):
 	$(MKDIR_P) $(TARGET_ramps_v14_BUILD_DIR)
